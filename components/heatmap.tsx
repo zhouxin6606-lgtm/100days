@@ -193,50 +193,48 @@ export function Heatmap({ data }: HeatmapProps) {
       </div>
 
       {/* 热力图 */}
-      <div className="overflow-x-auto">
-        <div className="inline-block">
-          <div className="flex">
-            {/* 星期标签 */}
-            <div className="mr-2 flex flex-col gap-[3px]">
-              {WEEKDAYS.map((day) => (
-                <div
-                  key={day}
-                  className="flex h-[14px] w-5 items-center text-[10px] text-zinc-300 dark:text-zinc-600"
-                >
-                  {day}
-                </div>
-              ))}
-            </div>
+      <div className="w-full">
+        <div className="flex w-full gap-4">
+          {/* 星期标签 */}
+          <div className="flex flex-col justify-between py-0.5">
+            {WEEKDAYS.map((day) => (
+              <div
+                key={day}
+                className="flex items-center text-[11px] text-zinc-300 dark:text-zinc-600"
+              >
+                {day}
+              </div>
+            ))}
+          </div>
 
-            {/* 网格 */}
-            <div className="flex gap-[3px]">
-              {weeks.map((week, wi) => (
-                <div key={wi} className="flex flex-col gap-[3px]">
-                  {week.map((day, di) => {
-                    if (!day) {
-                      return <div key={di} className="h-[14px] w-[14px]" />;
-                    }
-                    const colorIdx = getColorIndex(day.count);
-                    return (
-                      <div
-                        key={di}
-                        className={`h-[14px] w-[14px] cursor-pointer rounded-[3px] transition-all hover:scale-125 hover:ring-2 hover:ring-emerald-400/50 ${COLORS[colorIdx]}`}
-                        onMouseEnter={(e) => {
-                          const rect =
-                            e.currentTarget.getBoundingClientRect();
-                          setTooltip({
-                            x: rect.left + rect.width / 2,
-                            y: rect.top - 8,
-                            day,
-                          });
-                        }}
-                        onMouseLeave={() => setTooltip(null)}
-                      />
-                    );
-                  })}
-                </div>
-              ))}
-            </div>
+          {/* 网格 - 铺满宽度 */}
+          <div className="flex flex-1 gap-[3px]">
+            {weeks.map((week, wi) => (
+              <div key={wi} className="flex flex-1 flex-col gap-[3px]">
+                {week.map((day, di) => {
+                  if (!day) {
+                    return <div key={di} className="aspect-square" />;
+                  }
+                  const colorIdx = getColorIndex(day.count);
+                  return (
+                    <div
+                      key={di}
+                      className={`aspect-square cursor-pointer rounded-[3px] transition-all hover:scale-110 hover:ring-2 hover:ring-emerald-400/50 ${COLORS[colorIdx]}`}
+                      onMouseEnter={(e) => {
+                        const rect =
+                          e.currentTarget.getBoundingClientRect();
+                        setTooltip({
+                          x: rect.left + rect.width / 2,
+                          y: rect.top - 8,
+                          day,
+                        });
+                      }}
+                      onMouseLeave={() => setTooltip(null)}
+                    />
+                  );
+                })}
+              </div>
+            ))}
           </div>
         </div>
       </div>
