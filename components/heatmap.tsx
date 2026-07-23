@@ -25,7 +25,7 @@ const MONTHS = [
   "7月","8月","9月","10月","11月","12月",
 ];
 
-const WEEKDAYS = ["一", "三", "五", "日"];
+const WEEKDAYS = ["一", "二", "三", "四", "五", "六", "日"];
 
 function getColorIndex(count: number): number {
   if (count === 0) return 0;
@@ -194,13 +194,13 @@ export function Heatmap({ data }: HeatmapProps) {
 
       {/* 热力图 */}
       <div className="w-full">
-        <div className="flex w-full gap-4">
+        <div className="flex w-full gap-2">
           {/* 星期标签 */}
           <div className="flex flex-col justify-between py-0.5">
             {WEEKDAYS.map((day) => (
               <div
                 key={day}
-                className="flex items-center text-[11px] text-zinc-300 dark:text-zinc-600"
+                className="flex items-center text-[10px] text-zinc-300 dark:text-zinc-600"
               >
                 {day}
               </div>
@@ -208,9 +208,9 @@ export function Heatmap({ data }: HeatmapProps) {
           </div>
 
           {/* 网格 - 铺满宽度 */}
-          <div className="flex flex-1 gap-[3px]">
+          <div className="flex flex-1 gap-[2px]">
             {weeks.map((week, wi) => (
-              <div key={wi} className="flex flex-1 flex-col gap-[3px]">
+              <div key={wi} className="flex flex-1 flex-col gap-[2px]">
                 {week.map((day, di) => {
                   if (!day) {
                     return <div key={di} className="aspect-square" />;
@@ -219,7 +219,7 @@ export function Heatmap({ data }: HeatmapProps) {
                   return (
                     <div
                       key={di}
-                      className={`aspect-square cursor-pointer rounded-[3px] transition-all hover:scale-110 hover:ring-2 hover:ring-emerald-400/50 ${COLORS[colorIdx]}`}
+                      className={`aspect-square cursor-pointer rounded-sm transition-all hover:scale-110 hover:ring-1 hover:ring-emerald-400/50 ${COLORS[colorIdx]}`}
                       onMouseEnter={(e) => {
                         const rect =
                           e.currentTarget.getBoundingClientRect();
