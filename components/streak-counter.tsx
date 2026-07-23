@@ -6,24 +6,20 @@ export function StreakCounter({ streak }: { streak: Streak | null }) {
   const total = streak?.total_days ?? 0;
 
   return (
-    <div className="flex h-full flex-col justify-center rounded-xl border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900">
-      <div className="mb-3 flex items-center gap-3">
-        <span className="text-3xl">{current > 0 ? "🔥" : "💤"}</span>
-        <div>
-          <div className="text-3xl font-bold text-zinc-900 dark:text-zinc-100">
-            {current}
-          </div>
-          <div className="text-xs text-zinc-500 dark:text-zinc-400">
-            连续打卡天数
-          </div>
+    <div className="flex h-full flex-col justify-between rounded-2xl bg-gradient-to-br from-emerald-500 to-emerald-600 p-5 text-white shadow-lg shadow-emerald-500/20">
+      <div>
+        <p className="text-sm font-medium text-emerald-100">连续打卡</p>
+        <div className="mt-1 flex items-baseline gap-1">
+          <span className="text-5xl font-bold tracking-tight">{current}</span>
+          <span className="text-lg text-emerald-200">天</span>
         </div>
       </div>
-      <div className="flex gap-4 text-sm">
-        <span className="text-zinc-500 dark:text-zinc-400">
-          最长 <span className="font-semibold text-zinc-900 dark:text-zinc-100">{longest}</span> 天
+      <div className="mt-4 flex items-center gap-4 text-sm">
+        <span className="text-emerald-100">
+          最长 <span className="font-semibold text-white">{longest}</span> 天
         </span>
-        <span className="text-zinc-500 dark:text-zinc-400">
-          累计 <span className="font-semibold text-zinc-900 dark:text-zinc-100">{total}</span> 天
+        <span className="text-emerald-100">
+          累计 <span className="font-semibold text-white">{total}</span> 天
         </span>
       </div>
     </div>

@@ -14,8 +14,8 @@ interface HeatmapProps {
 
 const COLORS = [
   "bg-zinc-100 dark:bg-zinc-800",
-  "bg-emerald-200 dark:bg-emerald-900",
-  "bg-emerald-400 dark:bg-emerald-700",
+  "bg-emerald-100 dark:bg-emerald-900/40",
+  "bg-emerald-300 dark:bg-emerald-700",
   "bg-emerald-500 dark:bg-emerald-600",
   "bg-emerald-700 dark:bg-emerald-500",
 ];
@@ -25,7 +25,7 @@ const MONTHS = [
   "7月","8月","9月","10月","11月","12月",
 ];
 
-const WEEKDAYS = ["一", "二", "三", "四", "五", "六", "日"];
+const WEEKDAYS = ["一", "三", "五", "日"];
 
 function getColorIndex(count: number): number {
   if (count === 0) return 0;
@@ -148,42 +148,27 @@ export function Heatmap({ data }: HeatmapProps) {
 
   return (
     <div>
-      {/* 标题行：年月选择 + 统计 */}
-      <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+      {/* 标题行 */}
+      <div className="mb-5 flex items-center justify-between">
         <div className="flex items-center gap-2">
           <button
             onClick={goPrevMonth}
-            className="flex h-7 w-7 items-center justify-center rounded-lg text-zinc-500 hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-100"
+            className="flex h-8 w-8 items-center justify-center rounded-lg text-zinc-400 transition-colors hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-500 dark:hover:bg-zinc-800 dark:hover:text-zinc-100"
           >
-            ‹
+            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5 8.25 12l7.5-7.5" />
+            </svg>
           </button>
-          <select
-            value={selectedYear}
-            onChange={(e) => setSelectedYear(Number(e.target.value))}
-            className="rounded-lg border border-zinc-200 bg-white px-2 py-1 text-sm font-medium text-zinc-900 focus:border-emerald-500 focus:outline-none dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
-          >
-            {yearRange.map((y) => (
-              <option key={y} value={y}>
-                {y}年
-              </option>
-            ))}
-          </select>
-          <select
-            value={selectedMonth}
-            onChange={(e) => setSelectedMonth(Number(e.target.value))}
-            className="rounded-lg border border-zinc-200 bg-white px-2 py-1 text-sm font-medium text-zinc-900 focus:border-emerald-500 focus:outline-none dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
-          >
-            {MONTHS.map((m, i) => (
-              <option key={i} value={i}>
-                {m}
-              </option>
-            ))}
-          </select>
+          <span className="min-w-[100px] text-center text-sm font-semibold text-zinc-900 dark:text-zinc-100">
+            {selectedYear}年{MONTHS[selectedMonth]}
+          </span>
           <button
             onClick={goNextMonth}
-            className="flex h-7 w-7 items-center justify-center rounded-lg text-zinc-500 hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-100"
+            className="flex h-8 w-8 items-center justify-center rounded-lg text-zinc-400 transition-colors hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-500 dark:hover:bg-zinc-800 dark:hover:text-zinc-100"
           >
-            ›
+            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5" />
+            </svg>
           </button>
           {!isCurrentMonth && (
             <button
@@ -191,18 +176,18 @@ export function Heatmap({ data }: HeatmapProps) {
                 setSelectedYear(currentYear);
                 setSelectedMonth(currentMonth);
               }}
-              className="rounded-lg bg-emerald-100 px-2 py-1 text-xs font-medium text-emerald-700 hover:bg-emerald-200 dark:bg-emerald-900/30 dark:text-emerald-400 dark:hover:bg-emerald-900/50"
+              className="ml-2 rounded-full bg-emerald-50 px-3 py-1 text-xs font-medium text-emerald-600 transition-colors hover:bg-emerald-100 dark:bg-emerald-900/20 dark:text-emerald-400 dark:hover:bg-emerald-900/30"
             >
-              回到本月
+              本月
             </button>
           )}
         </div>
-        <div className="flex items-center gap-3 text-sm">
-          <span className="text-zinc-600 dark:text-zinc-400">
-            打卡 <span className="font-bold text-zinc-900 dark:text-zinc-100">{stats.totalDays}</span> 天
+        <div className="flex items-center gap-4 text-xs text-zinc-400 dark:text-zinc-500">
+          <span>
+            <span className="font-semibold text-zinc-900 dark:text-zinc-100">{stats.totalDays}</span> 天
           </span>
-          <span className="text-zinc-600 dark:text-zinc-400">
-            <span className="font-bold text-zinc-900 dark:text-zinc-100">{stats.totalMinutes}</span> 分钟
+          <span>
+            <span className="font-semibold text-zinc-900 dark:text-zinc-100">{stats.totalMinutes}</span> 分钟
           </span>
         </div>
       </div>
@@ -216,7 +201,7 @@ export function Heatmap({ data }: HeatmapProps) {
               {WEEKDAYS.map((day) => (
                 <div
                   key={day}
-                  className="flex h-[13px] w-6 items-center text-[11px] text-zinc-400 dark:text-zinc-500"
+                  className="flex h-[14px] w-5 items-center text-[10px] text-zinc-300 dark:text-zinc-600"
                 >
                   {day}
                 </div>
@@ -229,13 +214,13 @@ export function Heatmap({ data }: HeatmapProps) {
                 <div key={wi} className="flex flex-col gap-[3px]">
                   {week.map((day, di) => {
                     if (!day) {
-                      return <div key={di} className="h-[13px] w-[13px]" />;
+                      return <div key={di} className="h-[14px] w-[14px]" />;
                     }
                     const colorIdx = getColorIndex(day.count);
                     return (
                       <div
                         key={di}
-                        className={`h-[13px] w-[13px] cursor-pointer rounded-[3px] transition-transform hover:scale-125 ${COLORS[colorIdx]}`}
+                        className={`h-[14px] w-[14px] cursor-pointer rounded-[3px] transition-all hover:scale-125 hover:ring-2 hover:ring-emerald-400/50 ${COLORS[colorIdx]}`}
                         onMouseEnter={(e) => {
                           const rect =
                             e.currentTarget.getBoundingClientRect();
@@ -257,18 +242,20 @@ export function Heatmap({ data }: HeatmapProps) {
       </div>
 
       {/* 图例 */}
-      <div className="mt-3 flex items-center gap-1.5 text-[11px] text-zinc-400 dark:text-zinc-500">
-        <span>少</span>
-        {COLORS.map((color, i) => (
-          <div key={i} className={`h-[11px] w-[11px] rounded-[2px] ${color}`} />
-        ))}
-        <span>多</span>
+      <div className="mt-4 flex items-center justify-between">
+        <div className="flex items-center gap-1.5 text-[10px] text-zinc-400 dark:text-zinc-500">
+          <span>少</span>
+          {COLORS.map((color, i) => (
+            <div key={i} className={`h-[10px] w-[10px] rounded-[2px] ${color}`} />
+          ))}
+          <span>多</span>
+        </div>
       </div>
 
       {/* Tooltip */}
       {tooltip && (
         <div
-          className="pointer-events-none fixed z-50 rounded-lg bg-zinc-900 px-3 py-2 text-xs text-white shadow-lg dark:bg-zinc-100 dark:text-zinc-900"
+          className="pointer-events-none fixed z-50 rounded-xl bg-zinc-900 px-3 py-2 text-xs text-white shadow-xl dark:bg-zinc-100 dark:text-zinc-900"
           style={{
             left: tooltip.x,
             top: tooltip.y,
@@ -276,7 +263,7 @@ export function Heatmap({ data }: HeatmapProps) {
           }}
         >
           <p className="font-medium">{tooltip.day.date}</p>
-          <p>
+          <p className="text-zinc-300 dark:text-zinc-500">
             {tooltip.day.count > 0
               ? `${tooltip.day.count} 次打卡 · ${tooltip.day.minutes} 分钟`
               : "未打卡"}
