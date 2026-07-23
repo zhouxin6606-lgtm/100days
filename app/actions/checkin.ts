@@ -14,7 +14,7 @@ export async function checkIn(formData: FormData) {
   const notes = (formData.get("notes") as string) || "";
   const groupId = (formData.get("group_id") as string) || null;
 
-  // 插入打卡记录
+  // 1. 插入打卡记录
   const { error: insertError } = await supabase.from("check_ins").insert({
     user_id: user.id,
     group_id: groupId,
@@ -27,10 +27,9 @@ export async function checkIn(formData: FormData) {
     throw new Error("打卡失败: " + insertError.message);
   }
 
-  // 更新连续打卡（简单逻辑）
+  // 2. 更新连续打卡
   const today = new Date().toISOString().split("T")[0];
 
-  // 获取或创建 streak 记录
   let { data: streak } = await supabase
     .from("streaks")
     .select("*")
@@ -39,7 +38,6 @@ export async function checkIn(formData: FormData) {
     .maybeSingle();
 
   if (!streak) {
-    // 创建新记录
     await supabase.from("streaks").insert({
       user_id: user.id,
       group_id: groupId,
@@ -49,7 +47,6 @@ export async function checkIn(formData: FormData) {
       last_check_in: today,
     });
   } else if (streak.last_check_in !== today) {
-    // 计算连续天数
     const lastDate = new Date(streak.last_check_in);
     const now = new Date(today);
     const diffDays = Math.floor(
@@ -68,9 +65,12 @@ export async function checkIn(formData: FormData) {
         last_check_in: today,
       })
       .eq("id", streak.id);
+
+    // 更新本地变量以便后续使用
+    streak = { ...streak, current_streak: newStreak, longest_streak: newLongest, total_days: streak.total_days + 1 };
   }
 
-  // 更新 XP
+  // 3. 更新 XP 和等级
   const xpEarned = Math.min(10 + duration, 60);
   const { data: profile } = await supabase
     .from("profiles")
@@ -79,7 +79,7 @@ export async function checkIn(formData: FormData) {
     .single();
 
   if (profile) {
-    const newXp = profile.xp + xpEarned;
+    const newXp = (profile.xp || 0) + xpEarned;
     const newLevel = Math.floor(Math.sqrt(newXp / 100)) + 1;
     await supabase
       .from("profiles")
@@ -87,6 +87,30 @@ export async function checkIn(formData: FormData) {
       .eq("id", user.id);
   }
 
+  // 4. 检测并授予成就
+  if (streak) {
+    const achievementsToGrant: string[] = [];
+
+    if (streak.total_days >= 1) achievementsToGrant.push("first_checkin");
+    if (streak.current_streak >= 7 || streak.longest_streak >= 7)
+      achievementsToGrant.push("streak_7");
+    if (streak.current_streak >= 30 || streak.longest_streak >= 30)
+      achievementsToGrant.push("streak_30");
+    if (streak.current_streak >= 100 || streak.longest_streak >= 100)
+      achievementsToGrant.push("streak_100");
+
+    for (const type of achievementsToGrant) {
+      await supabase.from("achievements").upsert(
+        { user_id: user.id, type },
+        { onConflict: "user_id,type" },
+      );
+    }
+  }
+
+  // 5. 刷新页面缓存
   revalidatePath("/dashboard");
   revalidatePath("/checkin");
+  revalidatePath("/profile");
+
+  return { success: true, xpEarned };
 }
