@@ -1,6 +1,7 @@
 "use client";
 
-import { useActionState, useState } from "react";
+import { useActionState, useState, useRef } from "react";
+import { useRouter } from "next/navigation";
 import { checkIn } from "@/app/actions/checkin";
 import { UI_TEXT } from "@/lib/constants";
 import type { StudyGroup } from "@/lib/types";
@@ -10,12 +11,17 @@ export function CheckInForm({ groups }: { groups: StudyGroup[] }) {
   const [notes, setNotes] = useState("");
   const [groupId, setGroupId] = useState("");
   const [success, setSuccess] = useState(false);
+  const [xpEarned, setXpEarned] = useState(0);
+  const router = useRouter();
 
   const [state, formAction, pending] = useActionState(
     async (_prev: string | null, formData: FormData) => {
       try {
-        await checkIn(formData);
+        const result = await checkIn(formData);
+        setXpEarned(result?.xpEarned || 10);
         setSuccess(true);
+        // 刷新页面数据
+        router.refresh();
         return null;
       } catch (e) {
         return e instanceof Error ? e.message : "打卡失败";
@@ -32,17 +38,25 @@ export function CheckInForm({ groups }: { groups: StudyGroup[] }) {
           {UI_TEXT.checkin.success}
         </h2>
         <p className="text-sm text-emerald-600 dark:text-emerald-500">
-          学习了 {duration} 分钟，获得 {Math.min(10 + duration, 60)} XP
+          学习了 {duration} 分钟，获得 {xpEarned} XP
         </p>
-        <button
-          onClick={() => {
-            setSuccess(false);
-            setNotes("");
-          }}
-          className="mt-4 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-700 dark:bg-emerald-500 dark:hover:bg-emerald-600"
-        >
-          继续打卡
-        </button>
+        <div className="mt-4 flex flex-col gap-2 sm:flex-row sm:justify-center">
+          <button
+            onClick={() => {
+              setSuccess(false);
+              setNotes("");
+            }}
+            className="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-700 dark:bg-emerald-500 dark:hover:bg-emerald-600"
+          >
+            继续打卡
+          </button>
+          <button
+            onClick={() => router.push("/dashboard")}
+            className="rounded-lg border border-emerald-300 px-4 py-2 text-sm font-medium text-emerald-700 hover:bg-emerald-100 dark:border-emerald-700 dark:text-emerald-400 dark:hover:bg-emerald-900/30"
+          >
+            查看仪表盘
+          </button>
+        </div>
       </div>
     );
   }
