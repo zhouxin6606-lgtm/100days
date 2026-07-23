@@ -35,7 +35,6 @@ function getColorIndex(count: number): number {
   return 4;
 }
 
-// 生成指定月份的数据
 function getMonthData(
   allData: HeatmapDay[],
   year: number,
@@ -47,37 +46,6 @@ function getMonthData(
   for (let day = 1; day <= daysInMonth; day++) {
     const dateStr = `${year}-${String(month + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
     const found = allData.find((d) => d.date === dateStr);
-    result.push(found ?? { date: dateStr, count: 0, minutes: 0 });
-  }
-
-  return result;
-}
-
-// 生成指定年份的数据
-function getYearData(allData: HeatmapDay[], year: number): HeatmapDay[] {
-  const result: HeatmapDay[] = [];
-  const startDate = new Date(year, 0, 1);
-  const endDate = new Date(year, 11, 31);
-
-  for (let d = new Date(startDate); d <= endDate; d.setDate(d.getDate() + 1)) {
-    const dateStr = d.toLocaleDateString("en-CA");
-    const found = allData.find((item) => item.date === dateStr);
-    result.push(found ?? { date: dateStr, count: 0, minutes: 0 });
-  }
-
-  return result;
-}
-
-// 生成近3个月的数据
-function get3MonthData(allData: HeatmapDay[]): HeatmapDay[] {
-  const today = new Date();
-  const result: HeatmapDay[] = [];
-
-  for (let i = 89; i >= 0; i--) {
-    const d = new Date(today);
-    d.setDate(d.getDate() - i);
-    const dateStr = d.toLocaleDateString("en-CA");
-    const found = allData.find((item) => item.date === dateStr);
     result.push(found ?? { date: dateStr, count: 0, minutes: 0 });
   }
 
@@ -116,8 +84,6 @@ function getWeeks(data: HeatmapDay[]): (HeatmapDay | null)[][] {
   return weeks;
 }
 
-type ViewMode = "3months" | "year" | "month";
-
 export function Heatmap({ data }: HeatmapProps) {
   const [tooltip, setTooltip] = useState<{
     x: number;
@@ -129,11 +95,10 @@ export function Heatmap({ data }: HeatmapProps) {
   const currentYear = today.getFullYear();
   const currentMonth = today.getMonth();
 
-  const [viewMode, setViewMode] = useState<ViewMode>("3months");
   const [selectedYear, setSelectedYear] = useState(currentYear);
   const [selectedMonth, setSelectedMonth] = useState(currentMonth);
 
-  // 可选年份范围（从数据中推断）
+  // 可选年份
   const yearRange = useMemo(() => {
     const years = new Set<number>();
     years.add(currentYear);
@@ -144,85 +109,58 @@ export function Heatmap({ data }: HeatmapProps) {
     return Array.from(years).sort((a, b) => b - a);
   }, [data, currentYear]);
 
-  // 根据视图模式过滤数据
-  const filteredData = useMemo(() => {
-    switch (viewMode) {
-      case "3months":
-        return get3MonthData(data);
-      case "year":
-        return getYearData(data, selectedYear);
-      case "month":
-        return getMonthData(data, selectedYear, selectedMonth);
-    }
-  }, [data, viewMode, selectedYear, selectedMonth]);
+  // 月度数据
+  const monthData = useMemo(
+    () => getMonthData(data, selectedYear, selectedMonth),
+    [data, selectedYear, selectedMonth],
+  );
 
-  const weeks = getWeeks(filteredData);
+  const weeks = getWeeks(monthData);
 
-  // 统计信息
+  // 月度统计
   const stats = useMemo(() => {
-    const totalDays = filteredData.filter((d) => d.count > 0).length;
-    const totalMinutes = filteredData.reduce((sum, d) => sum + d.minutes, 0);
+    const totalDays = monthData.filter((d) => d.count > 0).length;
+    const totalMinutes = monthData.reduce((sum, d) => sum + d.minutes, 0);
     return { totalDays, totalMinutes };
-  }, [filteredData]);
+  }, [monthData]);
 
-  // 月份标签
-  const monthPositions: { month: string; weekIndex: number }[] = [];
-  let lastMonth = -1;
-  weeks.forEach((week, i) => {
-    const firstDay = week.find((d) => d !== null);
-    if (firstDay) {
-      const month = new Date(firstDay.date).getMonth();
-      if (month !== lastMonth) {
-        monthPositions.push({ month: MONTHS[month], weekIndex: i });
-        lastMonth = month;
-      }
+  // 上一月 / 下一月
+  const goPrevMonth = () => {
+    if (selectedMonth === 0) {
+      setSelectedMonth(11);
+      setSelectedYear(selectedYear - 1);
+    } else {
+      setSelectedMonth(selectedMonth - 1);
     }
-  });
+  };
+
+  const goNextMonth = () => {
+    if (selectedMonth === 11) {
+      setSelectedMonth(0);
+      setSelectedYear(selectedYear + 1);
+    } else {
+      setSelectedMonth(selectedMonth + 1);
+    }
+  };
+
+  const isCurrentMonth =
+    selectedYear === currentYear && selectedMonth === currentMonth;
 
   return (
     <div>
-      {/* 控制栏 */}
+      {/* 标题行：年月选择 + 统计 */}
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-        {/* 视图切换 */}
-        <div className="flex gap-1 rounded-lg bg-zinc-100 p-1 dark:bg-zinc-800">
-          <button
-            onClick={() => setViewMode("3months")}
-            className={`rounded-md px-3 py-1.5 text-xs font-medium transition-colors ${
-              viewMode === "3months"
-                ? "bg-white text-zinc-900 shadow dark:bg-zinc-700 dark:text-zinc-100"
-                : "text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100"
-            }`}
-          >
-            近3月
-          </button>
-          <button
-            onClick={() => setViewMode("year")}
-            className={`rounded-md px-3 py-1.5 text-xs font-medium transition-colors ${
-              viewMode === "year"
-                ? "bg-white text-zinc-900 shadow dark:bg-zinc-700 dark:text-zinc-100"
-                : "text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100"
-            }`}
-          >
-            年度
-          </button>
-          <button
-            onClick={() => setViewMode("month")}
-            className={`rounded-md px-3 py-1.5 text-xs font-medium transition-colors ${
-              viewMode === "month"
-                ? "bg-white text-zinc-900 shadow dark:bg-zinc-700 dark:text-zinc-100"
-                : "text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100"
-            }`}
-          >
-            月度
-          </button>
-        </div>
-
-        {/* 年份选择 */}
         <div className="flex items-center gap-2">
+          <button
+            onClick={goPrevMonth}
+            className="flex h-7 w-7 items-center justify-center rounded-lg text-zinc-500 hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-100"
+          >
+            ‹
+          </button>
           <select
             value={selectedYear}
             onChange={(e) => setSelectedYear(Number(e.target.value))}
-            className="rounded-lg border border-zinc-300 bg-white px-2 py-1.5 text-xs text-zinc-900 focus:border-emerald-500 focus:outline-none dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-100"
+            className="rounded-lg border border-zinc-200 bg-white px-2 py-1 text-sm font-medium text-zinc-900 focus:border-emerald-500 focus:outline-none dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
           >
             {yearRange.map((y) => (
               <option key={y} value={y}>
@@ -230,57 +168,55 @@ export function Heatmap({ data }: HeatmapProps) {
               </option>
             ))}
           </select>
-
-          {/* 月份选择（仅月度视图显示） */}
-          {viewMode === "month" && (
-            <select
-              value={selectedMonth}
-              onChange={(e) => setSelectedMonth(Number(e.target.value))}
-              className="rounded-lg border border-zinc-300 bg-white px-2 py-1.5 text-xs text-zinc-900 focus:border-emerald-500 focus:outline-none dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-100"
+          <select
+            value={selectedMonth}
+            onChange={(e) => setSelectedMonth(Number(e.target.value))}
+            className="rounded-lg border border-zinc-200 bg-white px-2 py-1 text-sm font-medium text-zinc-900 focus:border-emerald-500 focus:outline-none dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
+          >
+            {MONTHS.map((m, i) => (
+              <option key={i} value={i}>
+                {m}
+              </option>
+            ))}
+          </select>
+          <button
+            onClick={goNextMonth}
+            className="flex h-7 w-7 items-center justify-center rounded-lg text-zinc-500 hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-100"
+          >
+            ›
+          </button>
+          {!isCurrentMonth && (
+            <button
+              onClick={() => {
+                setSelectedYear(currentYear);
+                setSelectedMonth(currentMonth);
+              }}
+              className="rounded-lg bg-emerald-100 px-2 py-1 text-xs font-medium text-emerald-700 hover:bg-emerald-200 dark:bg-emerald-900/30 dark:text-emerald-400 dark:hover:bg-emerald-900/50"
             >
-              {MONTHS.map((m, i) => (
-                <option key={i} value={i}>
-                  {m}
-                </option>
-              ))}
-            </select>
+              回到本月
+            </button>
           )}
         </div>
-      </div>
-
-      {/* 统计信息 */}
-      <div className="mb-3 flex gap-4 text-xs text-zinc-500 dark:text-zinc-400">
-        <span>打卡 {stats.totalDays} 天</span>
-        <span>累计 {stats.totalMinutes} 分钟</span>
+        <div className="flex items-center gap-3 text-sm">
+          <span className="text-zinc-600 dark:text-zinc-400">
+            打卡 <span className="font-bold text-zinc-900 dark:text-zinc-100">{stats.totalDays}</span> 天
+          </span>
+          <span className="text-zinc-600 dark:text-zinc-400">
+            <span className="font-bold text-zinc-900 dark:text-zinc-100">{stats.totalMinutes}</span> 分钟
+          </span>
+        </div>
       </div>
 
       {/* 热力图 */}
       <div className="overflow-x-auto">
-        <div className="inline-block min-w-[500px]">
-          {/* 月份标签 */}
-          <div className="mb-1 flex pl-10">
-            {monthPositions.map((mp, i) => (
-              <div
-                key={i}
-                className="text-xs text-zinc-500 dark:text-zinc-400"
-                style={{
-                  position: "relative",
-                  left: `${mp.weekIndex * 14}px`,
-                  width: 0,
-                }}
-              >
-                {mp.month}
-              </div>
-            ))}
-          </div>
-
+        <div className="inline-block">
           <div className="flex">
             {/* 星期标签 */}
-            <div className="mr-1 flex flex-col gap-[2px]">
+            <div className="mr-2 flex flex-col gap-[3px]">
               {WEEKDAYS.map((day) => (
                 <div
                   key={day}
-                  className="flex h-[11px] w-8 items-center text-[10px] text-zinc-500 dark:text-zinc-400"
+                  className="flex h-[13px] w-6 items-center text-[11px] text-zinc-400 dark:text-zinc-500"
                 >
                   {day}
                 </div>
@@ -288,18 +224,18 @@ export function Heatmap({ data }: HeatmapProps) {
             </div>
 
             {/* 网格 */}
-            <div className="flex gap-[2px]">
+            <div className="flex gap-[3px]">
               {weeks.map((week, wi) => (
-                <div key={wi} className="flex flex-col gap-[2px]">
+                <div key={wi} className="flex flex-col gap-[3px]">
                   {week.map((day, di) => {
                     if (!day) {
-                      return <div key={di} className="h-[11px] w-[11px]" />;
+                      return <div key={di} className="h-[13px] w-[13px]" />;
                     }
                     const colorIdx = getColorIndex(day.count);
                     return (
                       <div
                         key={di}
-                        className={`h-[11px] w-[11px] cursor-pointer rounded-sm transition-transform hover:scale-150 ${COLORS[colorIdx]}`}
+                        className={`h-[13px] w-[13px] cursor-pointer rounded-[3px] transition-transform hover:scale-125 ${COLORS[colorIdx]}`}
                         onMouseEnter={(e) => {
                           const rect =
                             e.currentTarget.getBoundingClientRect();
@@ -321,10 +257,10 @@ export function Heatmap({ data }: HeatmapProps) {
       </div>
 
       {/* 图例 */}
-      <div className="mt-3 flex items-center gap-1 text-[10px] text-zinc-500 dark:text-zinc-400">
+      <div className="mt-3 flex items-center gap-1.5 text-[11px] text-zinc-400 dark:text-zinc-500">
         <span>少</span>
         {COLORS.map((color, i) => (
-          <div key={i} className={`h-[10px] w-[10px] rounded-sm ${color}`} />
+          <div key={i} className={`h-[11px] w-[11px] rounded-[2px] ${color}`} />
         ))}
         <span>多</span>
       </div>

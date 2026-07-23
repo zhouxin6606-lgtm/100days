@@ -2,7 +2,6 @@ import { createClient } from "@/lib/supabase/server";
 import { Heatmap } from "@/components/heatmap";
 import { StreakCounter } from "@/components/streak-counter";
 import { QuickCheckIn } from "@/components/quick-checkin";
-import { UI_TEXT } from "@/lib/constants";
 
 export default async function DashboardPage() {
   const supabase = await createClient();
@@ -18,7 +17,7 @@ export default async function DashboardPage() {
     .is("group_id", null)
     .single();
 
-  // Fetch all check-ins for heatmap (不加时间限制)
+  // Fetch all check-ins for heatmap
   const { data: checkIns } = await supabase
     .from("check_ins")
     .select("created_at, duration")
@@ -31,7 +30,7 @@ export default async function DashboardPage() {
     (ci) => new Date(ci.created_at).toLocaleDateString("en-CA") === today,
   ) ?? false;
 
-  // 转换为热力图数据格式（按日期聚合）
+  // 按日期聚合打卡数据
   const groupedMap = new Map<string, { count: number; minutes: number }>();
   for (const ci of checkIns ?? []) {
     const date = new Date(ci.created_at).toLocaleDateString("en-CA");
@@ -48,26 +47,15 @@ export default async function DashboardPage() {
   }));
 
   return (
-    <div className="mx-auto max-w-4xl p-4 md:p-8">
-      <h1 className="mb-6 text-2xl font-bold text-zinc-900 dark:text-zinc-100">
-        {UI_TEXT.nav.dashboard}
-      </h1>
-
-      {/* Streak Stats */}
-      <div className="mb-6">
+    <div className="mx-auto max-w-3xl p-4 md:p-6">
+      {/* 顶部：打卡按钮 + 连续天数 */}
+      <div className="mb-4 grid gap-4 md:grid-cols-[1fr_1fr]">
+        <QuickCheckIn checkedInToday={checkedInToday} />
         <StreakCounter streak={streak} />
       </div>
 
-      {/* Quick Check-in */}
-      <div className="mb-6">
-        <QuickCheckIn checkedInToday={checkedInToday} />
-      </div>
-
-      {/* Heatmap */}
+      {/* 热力图 */}
       <div className="rounded-xl border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900">
-        <h2 className="mb-3 text-sm font-medium text-zinc-700 dark:text-zinc-300">
-          学习热力图
-        </h2>
         <Heatmap data={heatmapData} />
       </div>
     </div>
