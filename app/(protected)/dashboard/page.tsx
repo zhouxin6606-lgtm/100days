@@ -2,7 +2,6 @@ import { createClient } from "@/lib/supabase/server";
 import { Heatmap } from "@/components/heatmap";
 import { StreakCounter } from "@/components/streak-counter";
 import { QuickCheckIn } from "@/components/quick-checkin";
-import { generateHeatmapData } from "@/lib/heatmap-data";
 import { UI_TEXT } from "@/lib/constants";
 
 export default async function DashboardPage() {
@@ -19,7 +18,7 @@ export default async function DashboardPage() {
     .is("group_id", null)
     .single();
 
-  // Fetch all check-ins for heatmap
+  // Fetch all check-ins for heatmap (不加时间限制)
   const { data: checkIns } = await supabase
     .from("check_ins")
     .select("created_at, duration")
@@ -32,7 +31,21 @@ export default async function DashboardPage() {
     (ci) => new Date(ci.created_at).toLocaleDateString("en-CA") === today,
   ) ?? false;
 
-  const heatmapData = generateHeatmapData(checkIns ?? []);
+  // 转换为热力图数据格式（按日期聚合）
+  const groupedMap = new Map<string, { count: number; minutes: number }>();
+  for (const ci of checkIns ?? []) {
+    const date = new Date(ci.created_at).toLocaleDateString("en-CA");
+    const existing = groupedMap.get(date) ?? { count: 0, minutes: 0 };
+    groupedMap.set(date, {
+      count: existing.count + 1,
+      minutes: existing.minutes + ci.duration,
+    });
+  }
+  const heatmapData = Array.from(groupedMap.entries()).map(([date, v]) => ({
+    date,
+    count: v.count,
+    minutes: v.minutes,
+  }));
 
   return (
     <div className="mx-auto max-w-4xl p-4 md:p-8">
