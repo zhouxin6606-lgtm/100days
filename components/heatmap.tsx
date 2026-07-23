@@ -194,49 +194,46 @@ export function Heatmap({ data }: HeatmapProps) {
 
       {/* 热力图 */}
       <div className="w-full">
-        <div className="flex gap-2">
-          {/* 星期标签在左侧 */}
-          <div className="flex flex-col gap-[2px]">
-            {["一", "二", "三", "四", "五", "六", "日"].map((day) => (
-              <div
-                key={day}
-                className="flex h-[14px] w-4 items-center text-[10px] text-zinc-300 dark:text-zinc-600"
-              >
-                {day}
-              </div>
-            ))}
-          </div>
+        {/* 星期标签在顶部 */}
+        <div className="mb-1 flex gap-[2px] pl-0">
+          {["一", "二", "三", "四", "五", "六", "日"].map((day) => (
+            <div
+              key={day}
+              className="flex flex-1 justify-center text-[10px] text-zinc-300 dark:text-zinc-600"
+            >
+              {day}
+            </div>
+          ))}
+        </div>
 
-          {/* 网格 - 按行排列（每行是一天） */}
-          <div className="flex flex-1 flex-col gap-[2px]">
-            {[0, 1, 2, 3, 4, 5, 6].map((dayIndex) => (
-              <div key={dayIndex} className="flex gap-[2px]">
-                {weeks.map((week, wi) => {
-                  const day = week[dayIndex];
-                  if (!day) {
-                    return <div key={wi} className="flex-1 aspect-square" />;
-                  }
-                  const colorIdx = getColorIndex(day.count);
-                  return (
-                    <div
-                      key={wi}
-                      className={`flex-1 aspect-square cursor-pointer rounded-sm transition-all hover:scale-110 hover:ring-1 hover:ring-emerald-400/50 ${COLORS[colorIdx]}`}
-                      onMouseEnter={(e) => {
-                        const rect =
-                          e.currentTarget.getBoundingClientRect();
-                        setTooltip({
-                          x: rect.left + rect.width / 2,
-                          y: rect.top - 8,
-                          day,
-                        });
-                      }}
-                      onMouseLeave={() => setTooltip(null)}
-                    />
-                  );
-                })}
-              </div>
-            ))}
-          </div>
+        {/* 网格 - 每行是一周 */}
+        <div className="flex flex-col gap-[2px]">
+          {weeks.map((week, wi) => (
+            <div key={wi} className="flex gap-[2px]">
+              {week.map((day, di) => {
+                if (!day) {
+                  return <div key={di} className="flex-1 aspect-square" />;
+                }
+                const colorIdx = getColorIndex(day.count);
+                return (
+                  <div
+                    key={di}
+                    className={`flex-1 aspect-square cursor-pointer rounded-sm transition-all hover:scale-110 hover:ring-1 hover:ring-emerald-400/50 ${COLORS[colorIdx]}`}
+                    onMouseEnter={(e) => {
+                      const rect =
+                        e.currentTarget.getBoundingClientRect();
+                      setTooltip({
+                        x: rect.left + rect.width / 2,
+                        y: rect.top - 8,
+                        day,
+                      });
+                    }}
+                    onMouseLeave={() => setTooltip(null)}
+                  />
+                );
+              })}
+            </div>
+          ))}
         </div>
       </div>
 
